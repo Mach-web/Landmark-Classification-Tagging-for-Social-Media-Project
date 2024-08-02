@@ -4,7 +4,7 @@ import torchvision.models as models
 import torch.nn as nn
 
 
-def get_model_transfer_learning(model_name="resnet18", n_classes=50):
+def get_model_transfer_learning(model_name="resnet50", n_classes=50):
 
     # Get the requested architecture
     if hasattr(models, model_name):
@@ -37,11 +37,12 @@ def get_model_transfer_learning(model_name="resnet18", n_classes=50):
     # 2. Create a new linear layer with the appropriate number of inputs and
     #    outputs
     model_transfer.fc  = nn.Sequential(
-        nn.Linear(num_ftrs, 256),
-        nn.BatchNorm1d(256),
+        nn.Linear(num_ftrs, 128),
+        nn.Dropout(0.35),
+        nn.BatchNorm1d(128),
         nn.ReLU(),
-
-        nn.Linear(256, 128),
+        
+        nn.Linear(128, 128),
         nn.Dropout(0.4),
         nn.BatchNorm1d(128),
         nn.ReLU(),

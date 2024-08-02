@@ -8,47 +8,49 @@ class MyModel(nn.Module):
 
         super().__init__()
         self.model = nn.Sequential(
-            nn.Conv2d(in_channels = 3, out_channels = 64, kernel_size = 3, padding = 'same'),
-            # nn.Dropout(0.3),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(in_channels = 3, out_channels = 32, kernel_size = 3, padding = 'same'),
+            # nn.Dropout(0.1),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2, 2), # 112
 
-            nn.Conv2d(64, 64, kernel_size = 3, padding = 'same'),
+            nn.Conv2d(32, 64, kernel_size = 3, padding = 'same'),
+            # nn.Dropout(0.1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2, 2), # 56
 
-            nn.Conv2d(64, 32, kernel_size = 3, padding = 'same'),
-            # nn.Dropout(0.3),
-            nn.BatchNorm2d(32),
+            nn.Conv2d(64, 128, kernel_size = 3, padding = 'same'),
+            # nn.Dropout(0.1),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2, 2), # 28
 
-            nn.Conv2d(32, 16, kernel_size = 3, padding = 'same'),
-            # nn.Dropout(0.3),
-            nn.BatchNorm2d(16),
+            nn.Conv2d(128, 128, kernel_size = 3, padding = 'same'),
+            # nn.Dropout(0.1),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2, 2), # 14
-
+            
+            nn.Conv2d(128, 256, kernel_size = 3, padding = 'same'),
+            # nn.Dropout(0.1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2), # 7
+            
             nn.Flatten(),
 
-            nn.Linear(16 * 14 * 14, 512),
+            nn.Linear(256 * 7 * 7, 1024),
             nn.Dropout(dropout),
-            nn.BatchNorm1d(512),
+            nn.BatchNorm1d(1024),
             nn.ReLU(),
 
-            nn.Linear(512, 256),
+            nn.Linear(1024, 256),
             nn.Dropout(dropout),
             nn.BatchNorm1d(256),
             nn.ReLU(),
-
-            nn.Linear(256, 128),
-            nn.Dropout(dropout),
-            nn.BatchNorm1d(128),
-            nn.ReLU(),
             
-            nn.Linear(128, num_classes)
+            nn.Linear(256, num_classes)
         )
 
         # YOUR CODE HERE

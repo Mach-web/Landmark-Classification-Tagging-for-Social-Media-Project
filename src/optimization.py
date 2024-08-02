@@ -49,9 +49,8 @@ def get_optimizer(
         # and weight_decay
         opt = torch.optim.Adam(
             model.parameters(),
-            lr = learning_rate
-            # momentum = momentum,
-            # weight_decay = weight_decay
+            lr = learning_rate,
+            weight_decay = weight_decay
             # YOUR CODE HERE
         )
     else:

@@ -8,7 +8,7 @@ from torchvision import datasets, transforms
 from tqdm import tqdm
 import multiprocessing
 import matplotlib.pyplot as plt
-
+import concurrent.futures
 
 # Let's see if we have an available GPU
 import numpy as np
@@ -32,7 +32,7 @@ def setup_env():
 
     # Download data if not present already
     download_and_extract()
-    compute_mean_and_std()
+    compute_mean_and_std_concurrent()
 
     # Make checkpoints subdir if not existing
     os.makedirs("checkpoints", exist_ok=True)
@@ -85,6 +85,62 @@ def download_and_extract(
         )
         return None
 
+# Compute image normalization
+def compute_mean_and_std_concurrent():
+    """
+   Compute per-channel mean and std of the dataset (to be used in transforms.Normalize())
+   """
+
+    cache_file = 'mean_and_std.pt'
+    if os.path.exists(cache_file):
+        print('Reusing cached mean and std')
+        d = torch.load(cache_file)
+
+        return (d['mean'], d['std'])
+
+    folder = get_data_location()
+    ds = datasets.ImageFolder(folder,
+                              transform=transforms.Compose([transforms.ToTensor()]))
+    dl = torch.utils.data.DataLoader(ds, batch_size=1, num_workers=0)
+
+    def compute_mean(images):
+        batch_samples = images.size(0)
+        images = images.view(batch_samples, images.size(1), -1)
+        return images.mean(2).sum(0)
+
+    mean = 0.0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as \
+        executor:
+        for mean_value in executor.map(compute_mean, (images
+                for (images, _) in tqdm(dl, total=len(ds),
+                desc='Computing mean', ncols=80))):
+            mean += mean_value
+    mean = mean / len(dl.dataset)
+
+    def compute_var_and_npix(images):
+        batch_samples = images.size(0)
+        images = images.view(batch_samples, images.size(1), -1)
+        var = ((images - mean.unsqueeze(1)) ** 2).sum([0, 2])
+        npix = images.nelement()
+        return (var, npix)
+
+    var = 0.0
+    npix = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as \
+        executor:
+        for (var_value, npix_value) in \
+            executor.map(compute_var_and_npix, (images for (images,
+                         _) in tqdm(dl, total=len(ds),
+                         desc='Computing std', ncols=80))):
+            var += var_value
+            npix += npix_value
+    std = torch.sqrt(var / (npix / 3))
+
+   # Cache results so we don't need to redo the computation
+
+    torch.save({'mean': mean, 'std': std}, cache_file)
+
+    return (mean, std)
 
 # Compute image normalization
 def compute_mean_and_std():
@@ -104,7 +160,7 @@ def compute_mean_and_std():
         folder, transform=transforms.Compose([transforms.ToTensor()])
     )
     dl = torch.utils.data.DataLoader(
-        ds, batch_size=1, num_workers=multiprocessing.cpu_count()
+        ds, batch_size=1, num_workers=0
     )
 
     mean = 0.0

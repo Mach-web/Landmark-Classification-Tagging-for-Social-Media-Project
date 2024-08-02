@@ -110,11 +110,14 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
     # plateau
     # HINT: look here: 
     # https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
-    scheduler  = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                 step_size = 3, 
-                                                 gamma = 3,
-                                                 verbose = True
-                                                )
+    scheduler  = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+                                                            mode = 'min',
+                                                            factor = 0.4,
+                                                            patience = 1)
+                                                #  step_size = 3, 
+                                                #  gamma = 0.5,
+                                                #  verbose = True
+                                    
     # YOUR CODE HERE
 
     for epoch in range(1, n_epochs + 1):
@@ -145,7 +148,7 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
 
         # Update learning rate, i.e., make a step in the learning rate scheduler
         # YOUR CODE HERE
-        scheduler.step()
+        scheduler.step(valid_loss)
         # Log the losses and the current learning rate
         if interactive_tracking:
             logs["loss"] = train_loss
